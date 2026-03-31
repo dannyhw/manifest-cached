@@ -44,6 +44,7 @@ export default Repack.defineRspackConfig(({mode, platform}) => {
       new Repack.plugins.ModuleFederationPluginV2({
         name: 'host',
         dts: false,
+        runtimePlugins: [path.resolve(__dirname, 'mf-offline-plugin.js')],
         remotes: {
           booking: `booking@http://localhost:9000/${platform}/mf-manifest.json`,
           shopping: `shopping@http://localhost:9001/${platform}/mf-manifest.json`,
