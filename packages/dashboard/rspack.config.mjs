@@ -22,7 +22,7 @@ export default Repack.defineRspackConfig(({mode, platform}) => {
     context: __dirname,
     entry: './index.js',
     resolve: {
-      ...Repack.getResolveOptions(),
+      ...Repack.getResolveOptions({enablePackageExports: true}),
     },
     output: {
       uniqueName: 'sas-dashboard',

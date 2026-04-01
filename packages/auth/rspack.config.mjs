@@ -19,9 +19,7 @@ export default Repack.defineRspackConfig(({mode}) => {
     mode,
     context: __dirname,
     entry: {},
-    resolve: {
-      ...Repack.getResolveOptions(),
-    },
+    resolve: {...Repack.getResolveOptions({enablePackageExports: true})},
     output: {
       uniqueName: 'sas-auth',
     },

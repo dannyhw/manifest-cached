@@ -4,9 +4,9 @@ import App from './src/App';
 import {name as appName} from './app.json';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// if (!__DEV__) {
-ScriptManager.shared.setStorage(AsyncStorage);
-// }
+if (!__DEV__) {
+  ScriptManager.shared.setStorage(AsyncStorage);
+}
 
 const MANIFEST_CACHE_FILE = 'mf_manifest_cache.json';
 
@@ -43,6 +43,10 @@ globalThis.__MF_MANIFEST_CACHE_PERSIST__ = async () => {
   }
 };
 
-loadManifestCache();
+// Temporarily disabled to avoid bootstrapping the runtime with stale manifest data.
+// Fresh network fetches still populate and persist the cache via __MF_MANIFEST_CACHE_PERSIST__.
+if (!__DEV__) {
+  loadManifestCache();
+}
 
 AppRegistry.registerComponent(appName, () => App);
