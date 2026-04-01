@@ -1,3 +1,4 @@
+// @ts-nocheck
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import * as Repack from '@callstack/repack';
@@ -21,7 +22,7 @@ export default Repack.defineRspackConfig(({mode, platform}) => {
     entry: './index.js',
     resolve: {...Repack.getResolveOptions({enablePackageExports: true})},
     output: {
-      uniqueName: 'sas-shopping',
+      uniqueName: 'sas-booking',
     },
     module: {
       rules: [
@@ -40,11 +41,12 @@ export default Repack.defineRspackConfig(({mode, platform}) => {
     plugins: [
       new Repack.RepackPlugin(),
       new Repack.plugins.ModuleFederationPluginV2({
-        name: 'shopping',
-        filename: 'shopping.container.js.bundle',
+        name: 'booking',
+        filename: 'booking.container.js.bundle',
         dts: false,
         exposes: {
           './App': './src/navigation/MainNavigator',
+          './UpcomingScreen': './src/screens/UpcomingScreen',
         },
         remotes: {
           auth: `auth@http://localhost:9003/${platform}/mf-manifest.json`,

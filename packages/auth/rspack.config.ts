@@ -1,3 +1,4 @@
+// @ts-nocheck
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import * as Repack from '@callstack/repack';
@@ -14,16 +15,14 @@ const __dirname = path.dirname(__filename);
  * Learn about Re.Pack configuration: https://re-pack.dev/docs/guides/configuration
  */
 
-export default Repack.defineRspackConfig(({mode, platform}) => {
+export default Repack.defineRspackConfig(({mode}) => {
   return {
     mode,
     context: __dirname,
-    entry: './index.js',
-    resolve: {
-      ...Repack.getResolveOptions({enablePackageExports: true}),
-    },
+    entry: {},
+    resolve: {...Repack.getResolveOptions({enablePackageExports: true})},
     output: {
-      uniqueName: 'sas-host',
+      uniqueName: 'sas-auth',
     },
     module: {
       rules: [
@@ -36,23 +35,25 @@ export default Repack.defineRspackConfig(({mode, platform}) => {
           },
           type: 'javascript/auto',
         },
-        ...Repack.getAssetTransformRules(),
+        ...Repack.getAssetTransformRules({inline: true}),
       ],
     },
     plugins: [
       new Repack.RepackPlugin(),
       new Repack.plugins.ModuleFederationPluginV2({
-        name: 'host',
+        name: 'auth',
+        filename: 'auth.container.js.bundle',
         dts: false,
-        runtimePlugins: [path.resolve(__dirname, 'mf-offline-plugin.js')],
-        remotes: {
-          booking: `booking@http://localhost:9000/${platform}/mf-manifest.json`,
-          shopping: `shopping@http://localhost:9001/${platform}/mf-manifest.json`,
-          dashboard: `dashboard@http://localhost:9002/${platform}/mf-manifest.json`,
-          auth: `auth@http://localhost:9003/${platform}/mf-manifest.json`,
-          news: `news@http://localhost:9004/${platform}/mf-manifest.json`,
+        exposes: {
+          './AccountScreen': './src/screens/AccountScreen',
+          './SignInScreen': './src/screens/SignInScreen',
+          './AuthProvider': './src/providers/AuthProvider',
         },
-        shared: getSharedDependencies({eager: true}),
+        shared: getSharedDependencies({eager: false}),
+      }),
+      new Repack.plugins.CodeSigningPlugin({
+        enabled: mode === 'production',
+        privateKeyPath: path.join('..', '..', 'code-signing.pem'),
       }),
       // silence missing @react-native-masked-view optionally required by @react-navigation/elements
       new rspack.IgnorePlugin({

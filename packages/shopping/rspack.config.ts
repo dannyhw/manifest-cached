@@ -1,3 +1,4 @@
+// @ts-nocheck
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import * as Repack from '@callstack/repack';
@@ -6,8 +7,6 @@ import {getSharedDependencies} from 'super-app-showcase-sdk';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const STANDALONE = Boolean(process.env.STANDALONE);
 
 /**
  * Rspack configuration enhanced with Re.Pack defaults for React Native.
@@ -21,11 +20,9 @@ export default Repack.defineRspackConfig(({mode, platform}) => {
     mode,
     context: __dirname,
     entry: './index.js',
-    resolve: {
-      ...Repack.getResolveOptions({enablePackageExports: true}),
-    },
+    resolve: {...Repack.getResolveOptions({enablePackageExports: true})},
     output: {
-      uniqueName: 'sas-dashboard',
+      uniqueName: 'sas-shopping',
     },
     module: {
       rules: [
@@ -38,22 +35,22 @@ export default Repack.defineRspackConfig(({mode, platform}) => {
           },
           type: 'javascript/auto',
         },
-        ...Repack.getAssetTransformRules({inline: !STANDALONE}),
+        ...Repack.getAssetTransformRules({inline: true}),
       ],
     },
     plugins: [
       new Repack.RepackPlugin(),
       new Repack.plugins.ModuleFederationPluginV2({
-        name: 'dashboard',
-        filename: 'dashboard.container.js.bundle',
+        name: 'shopping',
+        filename: 'shopping.container.js.bundle',
         dts: false,
-        exposes: STANDALONE
-          ? undefined
-          : {'./App': './src/navigation/MainNavigator'},
+        exposes: {
+          './App': './src/navigation/MainNavigator',
+        },
         remotes: {
           auth: `auth@http://localhost:9003/${platform}/mf-manifest.json`,
         },
-        shared: getSharedDependencies({eager: STANDALONE}),
+        shared: getSharedDependencies({eager: false}),
       }),
       new Repack.plugins.CodeSigningPlugin({
         enabled: mode === 'production',

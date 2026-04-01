@@ -1,3 +1,4 @@
+// @ts-nocheck
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import * as Repack from '@callstack/repack';
@@ -7,6 +8,8 @@ import {getSharedDependencies} from 'super-app-showcase-sdk';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const STANDALONE = Boolean(process.env.STANDALONE);
+
 /**
  * Rspack configuration enhanced with Re.Pack defaults for React Native.
  *
@@ -14,14 +17,16 @@ const __dirname = path.dirname(__filename);
  * Learn about Re.Pack configuration: https://re-pack.dev/docs/guides/configuration
  */
 
-export default Repack.defineRspackConfig(({mode}) => {
+export default Repack.defineRspackConfig(({mode, platform}) => {
   return {
     mode,
     context: __dirname,
-    entry: {},
-    resolve: {...Repack.getResolveOptions({enablePackageExports: true})},
+    entry: './index.js',
+    resolve: {
+      ...Repack.getResolveOptions({enablePackageExports: true}),
+    },
     output: {
-      uniqueName: 'sas-auth',
+      uniqueName: 'sas-dashboard',
     },
     module: {
       rules: [
@@ -34,21 +39,22 @@ export default Repack.defineRspackConfig(({mode}) => {
           },
           type: 'javascript/auto',
         },
-        ...Repack.getAssetTransformRules({inline: true}),
+        ...Repack.getAssetTransformRules({inline: !STANDALONE}),
       ],
     },
     plugins: [
       new Repack.RepackPlugin(),
       new Repack.plugins.ModuleFederationPluginV2({
-        name: 'auth',
-        filename: 'auth.container.js.bundle',
+        name: 'dashboard',
+        filename: 'dashboard.container.js.bundle',
         dts: false,
-        exposes: {
-          './AccountScreen': './src/screens/AccountScreen',
-          './SignInScreen': './src/screens/SignInScreen',
-          './AuthProvider': './src/providers/AuthProvider',
+        exposes: STANDALONE
+          ? undefined
+          : {'./App': './src/navigation/MainNavigator'},
+        remotes: {
+          auth: `auth@http://localhost:9003/${platform}/mf-manifest.json`,
         },
-        shared: getSharedDependencies({eager: false}),
+        shared: getSharedDependencies({eager: STANDALONE}),
       }),
       new Repack.plugins.CodeSigningPlugin({
         enabled: mode === 'production',

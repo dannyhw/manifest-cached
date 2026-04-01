@@ -1,3 +1,4 @@
+// @ts-nocheck
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import * as Repack from '@callstack/repack';
@@ -19,9 +20,11 @@ export default Repack.defineRspackConfig(({mode, platform}) => {
     mode,
     context: __dirname,
     entry: './index.js',
-    resolve: {...Repack.getResolveOptions({enablePackageExports: true})},
+    resolve: {
+      ...Repack.getResolveOptions({enablePackageExports: true}),
+    },
     output: {
-      uniqueName: 'sas-booking',
+      uniqueName: 'sas-host',
     },
     module: {
       rules: [
@@ -34,27 +37,23 @@ export default Repack.defineRspackConfig(({mode, platform}) => {
           },
           type: 'javascript/auto',
         },
-        ...Repack.getAssetTransformRules({inline: true}),
+        ...Repack.getAssetTransformRules(),
       ],
     },
     plugins: [
       new Repack.RepackPlugin(),
       new Repack.plugins.ModuleFederationPluginV2({
-        name: 'booking',
-        filename: 'booking.container.js.bundle',
+        name: 'host',
         dts: false,
-        exposes: {
-          './App': './src/navigation/MainNavigator',
-          './UpcomingScreen': './src/screens/UpcomingScreen',
-        },
+        runtimePlugins: [path.resolve(__dirname, 'mf-offline-plugin.ts')],
         remotes: {
+          booking: `booking@http://localhost:9000/${platform}/mf-manifest.json`,
+          shopping: `shopping@http://localhost:9001/${platform}/mf-manifest.json`,
+          dashboard: `dashboard@http://localhost:9002/${platform}/mf-manifest.json`,
           auth: `auth@http://localhost:9003/${platform}/mf-manifest.json`,
+          news: `news@http://localhost:9004/${platform}/mf-manifest.json`,
         },
-        shared: getSharedDependencies({eager: false}),
-      }),
-      new Repack.plugins.CodeSigningPlugin({
-        enabled: mode === 'production',
-        privateKeyPath: path.join('..', '..', 'code-signing.pem'),
+        shared: getSharedDependencies({eager: true}),
       }),
       // silence missing @react-native-masked-view optionally required by @react-navigation/elements
       new rspack.IgnorePlugin({

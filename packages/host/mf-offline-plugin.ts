@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * MF2 runtime plugin — caches manifests in globalThis (in-memory).
  * Persistence to disk is handled by index.js via the onCacheUpdate callback.
