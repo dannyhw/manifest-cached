@@ -1,3 +1,4 @@
+// @ts-nocheck
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import * as Repack from '@callstack/repack';
@@ -14,16 +15,14 @@ const __dirname = path.dirname(__filename);
  * Learn about Re.Pack configuration: https://re-pack.dev/docs/guides/configuration
  */
 
-export default Repack.defineRspackConfig(({mode}) => {
+export default Repack.defineRspackConfig(({mode, platform}) => {
   return {
     mode,
     context: __dirname,
-    entry: {},
-    resolve: {
-      ...Repack.getResolveOptions(),
-    },
+    entry: './index.js',
+    resolve: {...Repack.getResolveOptions({enablePackageExports: true})},
     output: {
-      uniqueName: 'sas-auth',
+      uniqueName: 'sas-booking',
     },
     module: {
       rules: [
@@ -42,13 +41,15 @@ export default Repack.defineRspackConfig(({mode}) => {
     plugins: [
       new Repack.RepackPlugin(),
       new Repack.plugins.ModuleFederationPluginV2({
-        name: 'auth',
-        filename: 'auth.container.js.bundle',
+        name: 'booking',
+        filename: 'booking.container.js.bundle',
         dts: false,
         exposes: {
-          './AccountScreen': './src/screens/AccountScreen',
-          './SignInScreen': './src/screens/SignInScreen',
-          './AuthProvider': './src/providers/AuthProvider',
+          './App': './src/navigation/MainNavigator',
+          './UpcomingScreen': './src/screens/UpcomingScreen',
+        },
+        remotes: {
+          auth: `auth@http://localhost:9003/${platform}/mf-manifest.json`,
         },
         shared: getSharedDependencies({eager: false}),
       }),

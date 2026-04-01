@@ -1,3 +1,4 @@
+// @ts-nocheck
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import * as Repack from '@callstack/repack';
@@ -19,9 +20,7 @@ export default Repack.defineRspackConfig(({mode, platform}) => {
     mode,
     context: __dirname,
     entry: './index.js',
-    resolve: {
-      ...Repack.getResolveOptions(),
-    },
+    resolve: {...Repack.getResolveOptions({enablePackageExports: true})},
     output: {
       uniqueName: 'sas-shopping',
     },

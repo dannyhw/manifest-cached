@@ -1,3 +1,4 @@
+// @ts-nocheck
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import * as Repack from '@callstack/repack';
@@ -6,6 +7,8 @@ import {getSharedDependencies} from 'super-app-showcase-sdk';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const STANDALONE = Boolean(process.env.STANDALONE);
 
 /**
  * Rspack configuration enhanced with Re.Pack defaults for React Native.
@@ -20,10 +23,10 @@ export default Repack.defineRspackConfig(({mode, platform}) => {
     context: __dirname,
     entry: './index.js',
     resolve: {
-      ...Repack.getResolveOptions(),
+      ...Repack.getResolveOptions({enablePackageExports: true}),
     },
     output: {
-      uniqueName: 'sas-booking',
+      uniqueName: 'sas-dashboard',
     },
     module: {
       rules: [
@@ -36,23 +39,22 @@ export default Repack.defineRspackConfig(({mode, platform}) => {
           },
           type: 'javascript/auto',
         },
-        ...Repack.getAssetTransformRules({inline: true}),
+        ...Repack.getAssetTransformRules({inline: !STANDALONE}),
       ],
     },
     plugins: [
       new Repack.RepackPlugin(),
       new Repack.plugins.ModuleFederationPluginV2({
-        name: 'booking',
-        filename: 'booking.container.js.bundle',
+        name: 'dashboard',
+        filename: 'dashboard.container.js.bundle',
         dts: false,
-        exposes: {
-          './App': './src/navigation/MainNavigator',
-          './UpcomingScreen': './src/screens/UpcomingScreen',
-        },
+        exposes: STANDALONE
+          ? undefined
+          : {'./App': './src/navigation/MainNavigator'},
         remotes: {
           auth: `auth@http://localhost:9003/${platform}/mf-manifest.json`,
         },
-        shared: getSharedDependencies({eager: false}),
+        shared: getSharedDependencies({eager: STANDALONE}),
       }),
       new Repack.plugins.CodeSigningPlugin({
         enabled: mode === 'production',

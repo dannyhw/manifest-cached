@@ -1,3 +1,4 @@
+// @ts-nocheck
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import * as Repack from '@callstack/repack';
@@ -6,8 +7,6 @@ import {getSharedDependencies} from 'super-app-showcase-sdk';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const STANDALONE = Boolean(process.env.STANDALONE);
 
 /**
  * Rspack configuration enhanced with Re.Pack defaults for React Native.
@@ -22,10 +21,10 @@ export default Repack.defineRspackConfig(({mode, platform}) => {
     context: __dirname,
     entry: './index.js',
     resolve: {
-      ...Repack.getResolveOptions(),
+      ...Repack.getResolveOptions({enablePackageExports: true}),
     },
     output: {
-      uniqueName: 'sas-dashboard',
+      uniqueName: 'sas-host',
     },
     module: {
       rules: [
@@ -38,26 +37,23 @@ export default Repack.defineRspackConfig(({mode, platform}) => {
           },
           type: 'javascript/auto',
         },
-        ...Repack.getAssetTransformRules({inline: !STANDALONE}),
+        ...Repack.getAssetTransformRules(),
       ],
     },
     plugins: [
       new Repack.RepackPlugin(),
       new Repack.plugins.ModuleFederationPluginV2({
-        name: 'dashboard',
-        filename: 'dashboard.container.js.bundle',
+        name: 'host',
         dts: false,
-        exposes: STANDALONE
-          ? undefined
-          : {'./App': './src/navigation/MainNavigator'},
+        runtimePlugins: [path.resolve(__dirname, 'mf-offline-plugin.ts')],
         remotes: {
+          booking: `booking@http://localhost:9000/${platform}/mf-manifest.json`,
+          shopping: `shopping@http://localhost:9001/${platform}/mf-manifest.json`,
+          dashboard: `dashboard@http://localhost:9002/${platform}/mf-manifest.json`,
           auth: `auth@http://localhost:9003/${platform}/mf-manifest.json`,
+          news: `news@http://localhost:9004/${platform}/mf-manifest.json`,
         },
-        shared: getSharedDependencies({eager: STANDALONE}),
-      }),
-      new Repack.plugins.CodeSigningPlugin({
-        enabled: mode === 'production',
-        privateKeyPath: path.join('..', '..', 'code-signing.pem'),
+        shared: getSharedDependencies({eager: true}),
       }),
       // silence missing @react-native-masked-view optionally required by @react-navigation/elements
       new rspack.IgnorePlugin({
